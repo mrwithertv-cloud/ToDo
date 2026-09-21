@@ -22,6 +22,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
+
 app.UseStaticFiles();
 app.UseCors();
 
@@ -135,56 +141,6 @@ app.MapDelete("/TaskDelete/{id}", async (int id, AppDbContext db) =>
 app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.Run();
-
-
-[DateTimeAtrebyte]
-public record ToDoRequest
-{
-    public string TaskId { get; set; } = null!;
-
-    [Required(ErrorMessage = "Назавение должно быть заполено")]
-    public required string TaskName { get; init; }
-
-    [Required(ErrorMessage = "Описание должно быть заполенено")]
-    public required string TaskDescription { get; init; }
-
-    [EnumDataType(typeof(TaskStatusNum), ErrorMessage = "Статус должен стоять от 1 до 5 ")]
-    public required TaskStatusNum TaskStatus { get; init; }
-
-    public DateTimeOffset TaskDate { get; set; } = DateTimeOffset.Now;
-    public required DateTimeOffset DateStart { get; set; }
-    public required DateTimeOffset DateEnd { get; set; }
-
-    [EnumDataType(typeof(TaskPriority), ErrorMessage = "Приоритет должен быть от 1 (High) до 3 (Low)")]
-    public required TaskPriority TaskPriority { get; init; }
-}
-
-
-public record ToDoEntity
-{
-    public int Id { get; set; }
-    public required string TaskName { get; set; }
-    public required string TaskDescription { get; set; }
-    public required TaskStatusNum TaskStatus { get; set; }
-    public DateTimeOffset TaskDate { get; set; }
-    public DateTimeOffset DateStart { get; set; }
-    public DateTimeOffset DateEnd { get; set; }
-    public required TaskPriority TaskPriority { get; set; }
-}
-
-
-public record ToDoResponse(
-    int Id,
-    string TaskName,
-    string TaskDescription,
-    TaskStatusNum TaskStatus,
-    DateTimeOffset TaskDate,
-    DateTimeOffset DateStart,
-    DateTimeOffset DateEnd,
-    TaskPriority TaskPriority
-);
-
-
 //ограничение диапазона для статуса
 public enum TaskStatusNum
 {
@@ -250,3 +206,54 @@ public class AppDbContext : DbContext
 
     public DbSet<ToDoEntity> ToDos => Set<ToDoEntity>();
 }
+
+
+[DateTimeAtrebyte]
+public record ToDoRequest
+{
+    public string TaskId { get; set; } = null!;
+
+    [Required(ErrorMessage = "Назавение должно быть заполено")]
+    public required string TaskName { get; init; }
+
+    [Required(ErrorMessage = "Описание должно быть заполенено")]
+    public required string TaskDescription { get; init; }
+
+    [EnumDataType(typeof(TaskStatusNum), ErrorMessage = "Статус должен стоять от 1 до 5 ")]
+    public required TaskStatusNum TaskStatus { get; init; }
+
+    public DateTimeOffset TaskDate { get; set; } = DateTimeOffset.Now;
+    public required DateTimeOffset DateStart { get; set; }
+    public required DateTimeOffset DateEnd { get; set; }
+
+    [EnumDataType(typeof(TaskPriority), ErrorMessage = "Приоритет должен быть от 1 (High) до 3 (Low)")]
+    public required TaskPriority TaskPriority { get; init; }
+}
+
+
+public record ToDoEntity
+{
+    public int Id { get; set; }
+    public required string TaskName { get; set; }
+    public required string TaskDescription { get; set; }
+    public required TaskStatusNum TaskStatus { get; set; }
+    public DateTimeOffset TaskDate { get; set; }
+    public DateTimeOffset DateStart { get; set; }
+    public DateTimeOffset DateEnd { get; set; }
+    public required TaskPriority TaskPriority { get; set; }
+}
+
+
+public record ToDoResponse(
+    int Id,
+    string TaskName,
+    string TaskDescription,
+    TaskStatusNum TaskStatus,
+    DateTimeOffset TaskDate,
+    DateTimeOffset DateStart,
+    DateTimeOffset DateEnd,
+    TaskPriority TaskPriority
+);
+
+
+
