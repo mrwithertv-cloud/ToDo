@@ -22,14 +22,53 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-}
-
 app.UseStaticFiles();
 app.UseCors();
+
+
+
+app.MapPost("/UserCreate", async (CreateUserReqest reqest, AppDbContext db) =>
+{
+    var user = new UserEntity
+    {
+        UserName = reqest.UserName,
+        UserId = reqest.UserId
+    };
+    
+    db.Users.Add(user);
+    
+    await db.SaveChangesAsync();
+    
+    return Results.Ok((user));
+
+});
+
+
+app.MapGet("/UserList", async (AppDbContext db) =>
+{
+    var items = await db.Users.Select(item =>new UserDtoItemList (item.UserId.ToString(), item.UserName.ToString()))
+        .ToListAsync();
+
+    if (items.Count == 0)
+
+        return Results.NoContent();
+
+    return Results.Ok(items);
+});
+
+
+app.MapDelete("/UserDelete/{id}", async (int id, AppDbContext db) =>
+{
+    var user = await db.Users.FindAsync(id);
+    if (user == null)
+        return Results.NotFound();
+    
+    db.Users.Remove(user);
+    
+    await db.SaveChangesAsync();
+    
+    return Results.Ok(user);
+});
 
 
 //Запрос на добавления задачи в список
@@ -141,71 +180,6 @@ app.MapDelete("/TaskDelete/{id}", async (int id, AppDbContext db) =>
 app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.Run();
-//ограничение диапазона для статуса
-public enum TaskStatusNum
-{
-    Completed = 5,
-    Canceled = 4,
-    Failed = 3,
-    InProgres = 2,
-    NotStarted = 1
-}
-
-
-//ограничение диапазона для приоритета задачи
-public enum TaskPriority
-{
-    High = 1,
-    Medium = 2,
-    Low = 3
-}
-
-//Структура для отдачи списка задач
-public readonly record struct TaskListItemDto(string TaskId, string TaskName, TaskPriority TaskPriority);
-
-
-//Проверка дат
-[AttributeUsage(AttributeTargets.Class)]
-public class DateTimeAtrebyte : ValidationAttribute
-{
-    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
-    {
-        if (value is ToDoRequest request)
-        {
-            if (request.DateStart > request.DateEnd)
-            {
-                return new ValidationResult("Дата начала не может быть позже даты окончания");
-            }
-        }
-
-        return ValidationResult.Success;
-    }
-}
-
-
-public static class MappingExtensions
-{
-    public static ToDoResponse ToResponse(this ToDoEntity entity) => new(
-        entity.Id,
-        entity.TaskName,
-        entity.TaskDescription,
-        entity.TaskStatus,
-        entity.TaskDate,
-        entity.DateStart,
-        entity.DateEnd,
-        entity.TaskPriority
-    );
-}
-
-
-public class AppDbContext : DbContext
-{
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
-
-    public DbSet<ToDoEntity> ToDos => Set<ToDoEntity>();
-}
 
 
 [DateTimeAtrebyte]
@@ -241,6 +215,8 @@ public record ToDoEntity
     public DateTimeOffset DateStart { get; set; }
     public DateTimeOffset DateEnd { get; set; }
     public required TaskPriority TaskPriority { get; set; }
+    public int UserId { get; set; }
+    public string? UserName { get; set; }
 }
 
 
@@ -255,5 +231,89 @@ public record ToDoResponse(
     TaskPriority TaskPriority
 );
 
+//Структура для отдачи списка задач
+public readonly record struct TaskListItemDto(string TaskId, string TaskName, TaskPriority TaskPriority);
 
+public record CreateUserReqest
+{
+    [Key]
+    public int UserId { get; set; }
+    public string? UserName { get; set; }
+}
+
+public record UserEntity
+{
+    public int UserId { get; set; }
+    public string? UserName { get; set; }
+    
+    public List<ToDoEntity> Todos { get; set; }
+}
+
+public readonly record struct UserDtoItemList(string UserId, string UserName);
+
+public static class MappingExtensions
+{
+    public static ToDoResponse ToResponse(this ToDoEntity entity) => new(
+        entity.Id,
+        entity.TaskName,
+        entity.TaskDescription,
+        entity.TaskStatus,
+        entity.TaskDate,
+        entity.DateStart,
+        entity.DateEnd,
+        entity.TaskPriority
+    );
+    
+}
+
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<ToDoEntity> ToDos => Set<ToDoEntity>();
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+}
+
+
+
+
+//Проверка дат
+[AttributeUsage(AttributeTargets.Class)]
+public class DateTimeAtrebyte : ValidationAttribute
+{
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+    {
+        if (value is ToDoRequest request)
+        {
+            if (request.DateStart > request.DateEnd)
+            {
+                return new ValidationResult("Дата начала не может быть позже даты окончания");
+            }
+        }
+
+        return ValidationResult.Success;
+    }
+}
+
+//ограничение диапазона для статуса
+public enum TaskStatusNum
+{
+    Completed = 5,
+    Canceled = 4,
+    Failed = 3,
+    InProgres = 2,
+    NotStarted = 1
+}
+
+
+//ограничение диапазона для приоритета задачи
+public enum TaskPriority
+{
+    High = 1,
+    Medium = 2,
+    Low = 3
+}
 
