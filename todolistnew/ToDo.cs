@@ -57,6 +57,20 @@ app.MapGet("/UserList", async (AppDbContext db) =>
 });
 
 
+app.MapGet("/UserTasks/{userId}", async (int userId, AppDbContext db) =>
+{
+    var tasks = await db.ToDos
+        .Where(t => t.UserId == userId)
+        .Select(item => new TaskListItemDto(item.Id.ToString(), item.TaskName, item.TaskPriority))
+        .ToListAsync();
+
+    if (tasks.Count == 0)
+        return Results.NoContent();
+
+    return Results.Ok(tasks);
+});
+
+
 app.MapDelete("/UserDelete/{id}", async (int id, AppDbContext db) =>
 {
     var user = await db.Users.FindAsync(id);
@@ -95,7 +109,8 @@ app.MapPost("/ToDo", async (ToDoRequest request, AppDbContext db) =>
         TaskDate = DateTimeOffset.Now,
         DateStart = request.DateStart,
         DateEnd = request.DateEnd,
-        TaskPriority = request.TaskPriority
+        TaskPriority = request.TaskPriority,
+        UserId = request.UserId
     };
     
     db.ToDos.Add(entity);
@@ -202,6 +217,8 @@ public record ToDoRequest
 
     [EnumDataType(typeof(TaskPriority), ErrorMessage = "Приоритет должен быть от 1 (High) до 3 (Low)")]
     public required TaskPriority TaskPriority { get; init; }
+    [Required(ErrorMessage = "Укажите ID пользователя")]
+    public required int UserId { get; init; }
 }
 
 
