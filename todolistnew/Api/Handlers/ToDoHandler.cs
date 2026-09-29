@@ -1,24 +1,26 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using todolistnew.Data;
-using todolistnew.Request;
-using todolistnew.Entities;
+using todolistnew.Api.Mappers;
+using todolistnew.Api.Models.Request;
+using todolistnew.Api.Models.Response;
+using todolistnew.Data.Contexts;
+using todolistnew.Data.Entities;
+using todolistnew.Data.Enum;
 
+namespace todolistnew.Api.Handlers;
 
-namespace todolistnew.Endpoints;
-
-public static class ToDo
+public static class ToDoHandler
 {
     public static void MapToDoEndpoints(this IEndpointRouteBuilder app)
     {
 //Запрос на добавления задачи в список
-        app.MapPost("/ToDo", async (ToDoRequest request, AppDbContext db) =>
+        app.MapPost("/ToDo", async (CreateToDoModel request, AppDbContext db) =>
         {
             var validationResults = new List<ValidationResult>();
             var validationContext = new ValidationContext(request);
 
-            bool isValid =
-                Validator.TryValidateObject(request, validationContext, validationResults, validateAllProperties: true);
+            var isValid =
+                Validator.TryValidateObject(request, validationContext, validationResults, true);
 
             if (!isValid)
             {
@@ -26,12 +28,11 @@ public static class ToDo
                 return Results.BadRequest(errors);
             }
 
-            var entity = new ToDoEntity
+            var entity = new ToDo
             {
                 TaskName = request.TaskName,
                 TaskDescription = request.TaskDescription,
                 TaskStatus = request.TaskStatus,
-                TaskDate = DateTimeOffset.Now,
                 DateStart = request.DateStart,
                 DateEnd = request.DateEnd,
                 TaskPriority = request.TaskPriority,
@@ -42,17 +43,17 @@ public static class ToDo
 
             await db.SaveChangesAsync();
 
-            return Results.Ok((entity));
+            return Results.Ok(entity.ToResponseModel());
         });
 
 
 // Запрос на редактирование задачи по ID
-        app.MapPut("/ToDoEdit/{id}", async (int id, ToDoRequest request, AppDbContext db) =>
+        app.MapPut("/ToDoEdit/{id:int}", async (int id, CreateToDoModel request, AppDbContext db) =>
         {
             var validationContext = new ValidationContext(request);
             var validationResults = new List<ValidationResult>();
 
-            bool isValid = Validator.TryValidateObject(request, validationContext, validationResults, true);
+            var isValid = Validator.TryValidateObject(request, validationContext, validationResults, true);
 
             if (!isValid)
             {
@@ -74,7 +75,7 @@ public static class ToDo
 
             await db.SaveChangesAsync();
 
-            return Results.Ok(existingTask);
+            return Results.Ok(existingTask.ToResponseModel());
         });
 
 
@@ -82,7 +83,14 @@ public static class ToDo
         app.MapGet("/ListTask", async (AppDbContext db) =>
         {
             var items = await db.ToDos
-                .Select(item => new TaskListItemDto(item.Id.ToString(), item.TaskName, item.TaskPriority))
+                .Select(item => new ToDoShortResponseModel
+                {
+                    Id = item.Id,
+                    TaskName = item.TaskName,
+                    TaskDescription = item.TaskDescription,
+                    TaskStatus = item.TaskStatus,
+                    TaskPriority = item.TaskPriority
+                })
                 .ToListAsync();
 
             if (items.Count == 0)
@@ -94,18 +102,18 @@ public static class ToDo
 
 
 //Запрос на получение конкретного ID
-        app.MapGet("/TaskId/{id}", async (int id, AppDbContext db) =>
+        app.MapGet("/TaskId/{id:int}", async (int id, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task == null)
                 return Results.NotFound();
 
-            return Results.Ok(task);
+            return Results.Ok(task.ToResponseModel());
         });
 
 
 //Запрос на удаление задачи по ID
-        app.MapDelete("/TaskDelete/{id}", async (int id, AppDbContext db) =>
+        app.MapDelete("/TaskDelete/{id:int}", async (int id, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task == null)
@@ -115,7 +123,7 @@ public static class ToDo
 
             await db.SaveChangesAsync();
 
-            return Results.Ok(task);
+            return Results.Ok();
         });
     }
 }

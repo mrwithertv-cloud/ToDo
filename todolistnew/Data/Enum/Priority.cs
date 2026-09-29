@@ -1,4 +1,4 @@
-﻿namespace todolistnew.Enum;
+﻿namespace todolistnew.Data.Enum;
 
 public enum TaskPriority
 {

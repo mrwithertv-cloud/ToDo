@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using todolistnew.Enum;
-using todolistnew.Validation;
+using todolistnew.Api.Validation;
+using todolistnew.Data.Enum;
 
-namespace todolistnew.Request;
+namespace todolistnew.Api.Models.Request;
 
 [DateTimeAtrebyte]
-public record ToDoRequest
+public record CreateToDoModel
 {
-    public string TaskId { get; set; } = null!;
-
     [Required(ErrorMessage = "Назавение должно быть заполено")]
     public required string TaskName { get; init; }
 
@@ -17,26 +15,12 @@ public record ToDoRequest
 
     [EnumDataType(typeof(TaskStatusNum), ErrorMessage = "Статус должен стоять от 1 до 5 ")]
     public required TaskStatusNum TaskStatus { get; init; }
-
-    public DateTimeOffset TaskDate { get; set; } = DateTimeOffset.Now;
-    public required DateTimeOffset DateStart { get; set; }
-    public required DateTimeOffset DateEnd { get; set; }
+    public required DateTimeOffset DateStart { get; init; }
+    public required DateTimeOffset DateEnd { get; init; }
 
     [EnumDataType(typeof(TaskPriority), ErrorMessage = "Приоритет должен быть от 1 (High) до 3 (Low)")]
     public required TaskPriority TaskPriority { get; init; }
+
     [Required(ErrorMessage = "Укажите ID пользователя")]
     public required int UserId { get; init; }
 }
-
-public record ToDoResponse(
-    int Id,
-    string TaskName,
-    string TaskDescription,
-    TaskStatusNum TaskStatus,
-    DateTimeOffset TaskDate,
-    DateTimeOffset DateStart,
-    DateTimeOffset DateEnd,
-    TaskPriority TaskPriority
-);
-
-public readonly record struct TaskListItemDto(string TaskId, string TaskName, TaskPriority TaskPriority);

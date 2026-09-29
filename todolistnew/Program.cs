@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using todolistnew.Data;
-using todolistnew.Endpoints;
+using todolistnew.Api.Handlers;
+using todolistnew.Data.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +30,5 @@ app.UseCors();
 // Регистрация эндпоинтов из наших классов
 app.MapUserEndpoints();
 app.MapToDoEndpoints();
-
-app.MapGet("/", () => Results.File("index.html", "text/html"));
 
 app.Run();

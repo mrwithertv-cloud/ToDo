@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using todolistnew.Entities;
-namespace todolistnew.Data;
+using todolistnew.Data.Entities;
+
+namespace todolistnew.Data.Contexts;
 
 public class AppDbContext : DbContext
 {
@@ -8,6 +9,6 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<ToDoEntity> ToDos => Set<ToDoEntity>();
-    public DbSet<UserEntity> Users => Set<UserEntity>();
+    public DbSet<ToDo> ToDos => Set<ToDo>();
+    public DbSet<User> Users => Set<User>();
 }
