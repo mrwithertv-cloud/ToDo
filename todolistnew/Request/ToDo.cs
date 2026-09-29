@@ -2,7 +2,7 @@
 using todolistnew.Enum;
 using todolistnew.Validation;
 
-namespace todolistnew.Dtos;
+namespace todolistnew.Request;
 
 [DateTimeAtrebyte]
 public record ToDoRequest

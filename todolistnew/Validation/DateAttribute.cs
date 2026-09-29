@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using todolistnew.Dtos;
+using todolistnew.Request;
 namespace todolistnew.Validation;
 
 public class DateTimeAtrebyte : ValidationAttribute

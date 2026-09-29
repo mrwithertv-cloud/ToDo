@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using todolistnew.Data;
-using todolistnew.Dtos;
+using todolistnew.Request;
 using todolistnew.Entities;
 
 
 namespace todolistnew.Endpoints;
 
-public static class ToDoEndpoints
+public static class ToDo
 {
     public static void MapToDoEndpoints(this IEndpointRouteBuilder app)
     {

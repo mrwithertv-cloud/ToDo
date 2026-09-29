@@ -1,4 +1,4 @@
-﻿namespace todolistnew.Dtos;
+﻿namespace todolistnew.Request;
 
 public record CreateUserReqest
 {

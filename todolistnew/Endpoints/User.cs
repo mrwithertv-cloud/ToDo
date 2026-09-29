@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using todolistnew.Data;
-using todolistnew.Dtos;
+using todolistnew.Request;
 using todolistnew.Entities;
 
 namespace todolistnew.Endpoints;
 
-public static class UserEndpoints
+public static class User
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
