@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using todolistnew.Api.Mappers;
 using todolistnew.Api.Models.Request;
@@ -45,40 +46,8 @@ public static class ToDoHandler
 
             return Results.Ok(entity.ToResponseModel());
         });
-
-
-// Запрос на редактирование задачи по ID
-        app.MapPut("/ToDoEdit/{id:int}", async (int id, CreateToDoModel request, AppDbContext db) =>
-        {
-            var validationContext = new ValidationContext(request);
-            var validationResults = new List<ValidationResult>();
-
-            var isValid = Validator.TryValidateObject(request, validationContext, validationResults, true);
-
-            if (!isValid)
-            {
-                var errors = validationResults.Select(r => r.ErrorMessage).ToList();
-                return Results.BadRequest(errors);
-            }
-
-            var existingTask = await db.ToDos.FindAsync(id);
-
-            if (existingTask == null)
-                return Results.NotFound();
-
-            existingTask.TaskName = request.TaskName;
-            existingTask.TaskDescription = request.TaskDescription;
-            existingTask.TaskStatus = request.TaskStatus;
-            existingTask.DateStart = request.DateStart;
-            existingTask.DateEnd = request.DateEnd;
-            existingTask.TaskPriority = request.TaskPriority;
-
-            await db.SaveChangesAsync();
-
-            return Results.Ok(existingTask.ToResponseModel());
-        });
-
-
+        
+        
 //Запрос на получение ID
         app.MapGet("/ListTask", async (AppDbContext db) =>
         {
@@ -123,6 +92,87 @@ public static class ToDoHandler
 
             await db.SaveChangesAsync();
 
+            return Results.Ok();
+        });
+        
+        // Запрос на редактирование задачи по ID
+        app.MapPut("/ToDoEdit/{id:int}", async (int id, CreateToDoModel request, AppDbContext db) =>
+        {
+            var validationContext = new ValidationContext(request);
+            var validationResults = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(request, validationContext, validationResults, true);
+
+            if (!isValid)
+            {
+                var errors = validationResults.Select(r => r.ErrorMessage).ToList();
+                return Results.BadRequest(errors);
+            }
+
+            var existingTask = await db.ToDos.FindAsync(id);
+
+            if (existingTask == null)
+                return Results.NotFound();
+
+            existingTask.TaskName = request.TaskName;
+            existingTask.TaskDescription = request.TaskDescription;
+            existingTask.TaskStatus = request.TaskStatus;
+            existingTask.DateStart = request.DateStart;
+            existingTask.DateEnd = request.DateEnd;
+            existingTask.TaskPriority = request.TaskPriority;
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok(existingTask.ToResponseModel());
+        });
+        
+        app.MapPatch("/ChangeStatus/{id:int}/{status}", async  (int id, string status, AppDbContext db) =>
+        {
+            var task = await db.ToDos.FindAsync(id);
+            if (task is null) return Results.NotFound();
+
+            if (!Enum.TryParse<TaskStatusNum>(status, true, out var statusNum))
+            {
+                return Results.BadRequest();
+            }
+            task.TaskStatus = statusNum;
+            await db.SaveChangesAsync();
+            return Results.NoContent();
+        });
+
+        app.MapPatch("/ChangeUser/{id:int}/{userId:int}", async (int id, int userId, AppDbContext db) =>
+        {
+            var task = await db.ToDos.FindAsync(id);
+            if (task is null) return Results.NotFound();
+            
+            var userExists =  await db.Users.AnyAsync(u=> u.UserId == userId);
+            if (!userExists)
+            {
+                return Results.BadRequest("User not found");
+            }
+
+            if (task.UserId == userId)
+            {
+                return Results.Ok("Задача уже принадлежит пользователю");
+            }
+            
+            task.UserId = userId;
+            await  db.SaveChangesAsync();
+            return Results.Ok();
+        });
+
+        app.MapPatch("/ChangePriority/{id:int}/{priority}", async(int id, string priority, AppDbContext db) =>
+        {
+            var task = await db.ToDos.FindAsync(id);
+            if (task is null) return Results.NotFound();
+
+            if (!Enum.TryParse<TaskPriority>(priority, true, out var priorityNum ))
+            {
+                return Results.BadRequest();
+            }
+
+            task.TaskPriority = priorityNum;
+            await db.SaveChangesAsync();
             return Results.Ok();
         });
     }

@@ -73,5 +73,15 @@ public static class UserHandler
 
             return Results.Ok();
         });
+
+        /*app.MapPatch("/ChangeUserName/{id:int}/{name}", async (int id, string name ,AppDbContext db) =>
+        {
+            var user = await db.Users.FindAsync(id);
+            if (user is null) return Results.NotFound();
+
+            user.UserName = name;
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        });*/
     }
 }
