@@ -4,7 +4,7 @@ using todolistnew.Api.Models.Request;
 using todolistnew.Api.Models.Response;
 using todolistnew.Data.Contexts;
 using todolistnew.Data.Entities;
-using todolistnew.Data.Enum;
+
 
 namespace todolistnew.Api.Handlers;
 
@@ -12,7 +12,7 @@ public static class UserHandler
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/UserCreate", async (CreateUserModel model, AppDbContext db) =>
+        app.MapPost("/user-create", async (CreateUserModel model, AppDbContext db) =>
         {
             var user = new User
             {
@@ -27,7 +27,7 @@ public static class UserHandler
         });
 
 
-        app.MapGet("/UserList", async (AppDbContext db) =>
+        app.MapGet("/user-list", async (AppDbContext db) =>
         {
             var items = await db.Users
                 .Select(item => new UserResponseModel
@@ -44,7 +44,7 @@ public static class UserHandler
         });
 
 
-        app.MapGet("/UserTasks/{userId:int}", async (int userId, AppDbContext db) =>
+        app.MapGet("/user-tasks/{userId:int}", async (int userId, AppDbContext db) =>
         {
             var tasks = (await db.Users
                 .Include(u => u.Todos)
@@ -61,7 +61,7 @@ public static class UserHandler
         });
 
 
-        app.MapDelete("/UserDelete/{id:int}", async (int id, AppDbContext db) =>
+        app.MapDelete("/user-delete/{id:int}", async (int id, AppDbContext db) =>
         {
             var user = await db.Users.FindAsync(id);
             if (user == null)
@@ -74,14 +74,20 @@ public static class UserHandler
             return Results.Ok();
         });
 
-        /*app.MapPatch("/ChangeUserName/{id:int}/{name}", async (int id, string name ,AppDbContext db) =>
+        app.MapPatch("/change-user-name/{userId:int}/{name}", async (int userId, string name ,AppDbContext db) =>
         {
-            var user = await db.Users.FindAsync(id);
+            var user = await db.Users.FindAsync(userId);
             if (user is null) return Results.NotFound();
+
+            bool isEqual = string.Equals(name, user.UserName, StringComparison.CurrentCultureIgnoreCase);
+            if (isEqual) 
+            {
+                return Results.BadRequest("одинаковые");
+            }
 
             user.UserName = name;
             await db.SaveChangesAsync();
             return Results.Ok();
-        });*/
+        });
     }
 }

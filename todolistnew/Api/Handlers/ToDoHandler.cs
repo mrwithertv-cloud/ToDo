@@ -15,7 +15,7 @@ public static class ToDoHandler
     public static void MapToDoEndpoints(this IEndpointRouteBuilder app)
     {
 //Запрос на добавления задачи в список
-        app.MapPost("/ToDo", async (CreateToDoModel request, AppDbContext db) =>
+        app.MapPost("/todo", async (CreateToDoModel request, AppDbContext db) =>
         {
             var validationResults = new List<ValidationResult>();
             var validationContext = new ValidationContext(request);
@@ -49,7 +49,7 @@ public static class ToDoHandler
         
         
 //Запрос на получение ID
-        app.MapGet("/ListTask", async (AppDbContext db) =>
+        app.MapGet("/list-task", async (AppDbContext db) =>
         {
             var items = await db.ToDos
                 .Select(item => new ToDoShortResponseModel
@@ -71,7 +71,7 @@ public static class ToDoHandler
 
 
 //Запрос на получение конкретного ID
-        app.MapGet("/TaskId/{id:int}", async (int id, AppDbContext db) =>
+        app.MapGet("/task-id/{id:int}", async (int id, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task == null)
@@ -82,7 +82,7 @@ public static class ToDoHandler
 
 
 //Запрос на удаление задачи по ID
-        app.MapDelete("/TaskDelete/{id:int}", async (int id, AppDbContext db) =>
+        app.MapDelete("/task-delete/{id:int}", async (int id, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task == null)
@@ -96,7 +96,7 @@ public static class ToDoHandler
         });
         
         // Запрос на редактирование задачи по ID
-        app.MapPut("/ToDoEdit/{id:int}", async (int id, CreateToDoModel request, AppDbContext db) =>
+        app.MapPut("/todo-edit/{id:int}", async (int id, CreateToDoModel request, AppDbContext db) =>
         {
             var validationContext = new ValidationContext(request);
             var validationResults = new List<ValidationResult>();
@@ -126,7 +126,7 @@ public static class ToDoHandler
             return Results.Ok(existingTask.ToResponseModel());
         });
         
-        app.MapPatch("/ChangeStatus/{id:int}/{status}", async  (int id, string status, AppDbContext db) =>
+        app.MapPatch("/change-status/{id:int}/{status}", async  (int id, string status, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task is null) return Results.NotFound();
@@ -140,7 +140,7 @@ public static class ToDoHandler
             return Results.NoContent();
         });
 
-        app.MapPatch("/ChangeUser/{id:int}/{userId:int}", async (int id, int userId, AppDbContext db) =>
+        app.MapPatch("/change-user/{id:int}/{userId:int}", async (int id, int userId, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task is null) return Results.NotFound();
@@ -161,7 +161,7 @@ public static class ToDoHandler
             return Results.Ok();
         });
 
-        app.MapPatch("/ChangePriority/{id:int}/{priority}", async(int id, string priority, AppDbContext db) =>
+        app.MapPatch("/change-priority/{id:int}/{priority}", async(int id, string priority, AppDbContext db) =>
         {
             var task = await db.ToDos.FindAsync(id);
             if (task is null) return Results.NotFound();
@@ -173,6 +173,50 @@ public static class ToDoHandler
 
             task.TaskPriority = priorityNum;
             await db.SaveChangesAsync();
+            return Results.Ok();
+        });
+
+
+        app.MapPost("/little-task/{id:int}", async (CreateToDoModel request,int id, AppDbContext db) =>
+        {
+            var validationResults = new List<ValidationResult>();
+            var validationContext = new ValidationContext(request);
+
+            var isValid =
+                Validator.TryValidateObject(request, validationContext, validationResults, true);
+
+            if (!isValid)
+            {
+                var errors = validationResults.Select(r => r.ErrorMessage).ToList();
+                return Results.BadRequest(errors);
+            }
+            
+            var ParentTask = await db.ToDos.FindAsync(id);
+            if (ParentTask is null) return Results.NotFound();
+            
+            
+            var userExists = await db.Users.AnyAsync(u => u.UserId == ParentTask.UserId);
+            if (!userExists)
+            {
+                return Results.BadRequest("User not found");
+            }
+            
+            var entity = new ToDo
+            {
+                TaskName = request.TaskName,
+                TaskDescription = request.TaskDescription,
+                TaskStatus = request.TaskStatus,
+                DateStart = request.DateStart,
+                DateEnd = request.DateEnd,
+                TaskPriority = request.TaskPriority,
+                UserId = request.UserId,
+                ParentId = id,
+            };
+
+            db.ToDos.Add(entity);
+
+            await db.SaveChangesAsync();
+
             return Results.Ok();
         });
     }

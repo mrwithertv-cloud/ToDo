@@ -11,7 +11,7 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddPooledDbContextFactory<AppDbContext>(options =>
     options.UseSqlite("data source = app.db"));
 
 var app = builder.Build();
@@ -20,7 +20,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    await db.Database.MigrateAsync();
 }
 
 // Middleware

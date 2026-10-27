@@ -23,4 +23,5 @@ public record CreateToDoModel
 
     [Required(ErrorMessage = "Укажите ID пользователя")]
     public required int UserId { get; init; }
+    
 }

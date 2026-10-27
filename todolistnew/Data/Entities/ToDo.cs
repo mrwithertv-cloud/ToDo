@@ -1,9 +1,12 @@
-﻿using todolistnew.Data.Enum;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using todolistnew.Data.Enum;
 
 namespace todolistnew.Data.Entities;
 
 public record ToDo
 {
+    
     public int Id { get; init; }
     public required string TaskName { get; set; }
     public required string TaskDescription { get; set; }
@@ -14,9 +17,8 @@ public record ToDo
     public required TaskPriority TaskPriority { get; set; }
     public required int UserId { get; set; }
     public User User { get; set; }
+    public int? ParentId { get; set; }
+    public ToDo? Parent { get; set; }
+
+    public Collection<ToDo> ChildToDos { get; set; } = [];
 }
-
-
-
-
-
